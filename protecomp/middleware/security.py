@@ -3,8 +3,8 @@ from django.conf import settings
 
 class SecureRequiredMiddleware(object):
     def __init__(self):
-        self.paths = getattr(settings, 'SECURE_REQUIRED_PATHS')
-        self.enabled = self.paths and getattr(settings, 'HTTPS_SUPPORT')
+        self.paths = getattr(settings, 'SECURE_REQUIRED_PATHS', None)
+        self.enabled = self.paths and getattr(settings, 'HTTPS_SUPPORT', False)
 
     def process_request(self, request):
         if self.enabled and not request.is_secure():
