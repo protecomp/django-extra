@@ -11,8 +11,8 @@ import itertools
 #
 # example:
 # env.my_servers = {
-#     'first_server.my.com':  {'app-server': True, 'media-server': True},
-#     'second_server.my.com': {'app-server': True, 'database-server': True},
+#     'first_server.my.com':  {'app-server': True, 'code': True, 'media': True},
+#     'second_server.my.com': {'app-server': True, 'database': True},
 # }
 #
 # in other file, you can do:
@@ -21,8 +21,8 @@ import itertools
 # result:
 # env.roledefs = {
 #     'app-server':      ['first_server.my.com', 'second_server.my.com'],
-#     'media-server':    ['first_server.my.com'],
-#     'database-server': ['second_server.my.com'],
+#     'media':    ['first_server.my.com'],
+#     'database': ['second_server.my.com'],
 # }
 ##
 
