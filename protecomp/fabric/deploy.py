@@ -41,7 +41,7 @@ def revision_for_path(path):
             branch = run('hg branch').strip()
         else:
             return (False, False)
-    return tuple(branch, rev)
+    return (branch, rev)
 
 @task
 @roles('code')
