@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
 """
 Code deployment commands
 
 Required env-variables:
 
-- env.remote_base, the project base path on semote media-server, absolute path
+- env.remote_base, the project base path on remote media-server, absolute path
 
 The rest are relative to the remote_base path
 
