@@ -90,7 +90,7 @@ def update_requirements():
 def update():
     """Pull and update remote repository"""
     print "Updating %s:" % env.host
-    print "Revision before update:\t%s:%s" % get_revision(0)
+    print "Revision before update:\t%s:%s" % revision_for_path(env.remote_base)
     with settings(
             hide('stdout', 'running'),
             cd(env.remote_base),
@@ -104,7 +104,7 @@ def update():
             run('hg update')
         else:
             print "Unsupported revision control system or wrong remote_base"
-    print "Updated to revision: \t%s:%s" % get_revision(0)
+    print "Updated to revision: \t%s:%s" % revision_for_path(env.remote_base)
 
 @task
 @roles('media')
