@@ -3,13 +3,13 @@ Code deployment commands
 
 Required env-variables:
 
-– env.remote_base, the project base path on semote media-server, absolute path
+- env.remote_base, the project base path on semote media-server, absolute path
 
 The rest are relative to the remote_base path
 
-- env.virtualenv_path, the path to virtual environment activate-script (relative)
-- env.manage_path, the path to manage.py -file, (relative)
-- env.pip_requirements, the path to pip-requirements.txt file (relative)
+- env.virtualenv, path to virtual environment root
+- env.manage, path to manage.py -file
+- env.pip_requirements, path to pip requirements-file
 """
 import os
 
@@ -60,8 +60,7 @@ def get_revision(output_level=2):
 @roles('code')
 def revision(package=''):
     if package:
-        VIRTUALENV_SRC_PATH = 'virtualenv/src'
-        package_path = os.path.join(env.remote_base, VIRTUALENV_SRC_PATH, package)
+        package_path = os.path.join(env.remote_base, env.virtualenv, 'src', package)
         if exists(package_path):
             (branch, rev) = revision_for_path(package_path)
             print "%s: branch %s, revision %s" % (package, branch, rev)
@@ -74,9 +73,7 @@ def revision(package=''):
 @roles('code')
 def update_requirements():
     """Run pip install on remote machine to update python libraries"""
-    activate = os.path.join(env.remote_base, env.virtualenv_path)
-    # Quirk: We have manage_path pointing to manage.py, so we can use it
-    # and just change manage.py to pip-requirements.txt
+    activate = os.path.join(env.remote_base, env.virtualenv, 'bin/activate')
     pip_requirements = os.path.join(env.remote_base, env.pip_requirements)
     
     print "Updating pip-requirements..."
@@ -112,8 +109,8 @@ def update():
 @roles('media')
 def collectstatic():
     """Run manage.py collectstatic script on media-server"""
-    activate = os.path.join(env.remote_base, env.virtualenv_path)
-    manage = os.path.join(env.remote_base, env.manage_path)
+    activate = os.path.join(env.remote_base, env.virtualenv, 'bin/activate')
+    manage = os.path.join(env.remote_base, env.manage)
     run('source %s; python %s collectstatic ' % (activate, manage))
 
 @task
@@ -127,7 +124,7 @@ def reload():
 def migrate(option=''):
     """Run syncdb and migrations. Allowed option: merge"""
     option = "--" + option if option == 'merge' else ''
-    activate = os.path.join(env.remote_base, env.virtualenv_path)
-    manage = os.path.join(env.remote_base, env.manage_path)
+    activate = os.path.join(env.remote_base, env.virtualenv, 'bin/activate')
+    manage = os.path.join(env.remote_base, env.manage)
     run("source %s; python %s syncdb" % (activate, manage))
     run("source %s; python %s migrate %s" % (activate, manage, option))

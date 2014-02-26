@@ -44,7 +44,7 @@ def single_host(hostname):
         env.roledefs = util.single_host('my.host.com')
     """
     return {
-        'media-server': [hostname],
+        'media':        [hostname],
         'app-server':   [hostname],
         'code':         [hostname],
         'migration':    [hostname],
