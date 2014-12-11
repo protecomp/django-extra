@@ -60,7 +60,7 @@ def get_revision(output_level=2):
 @task
 @roles('code')
 def revision(package=''):
-    if package:
+    if package and 'app-server' in env.roles:
         package_path = os.path.join(env.remote_base, env.virtualenv, 'src', package)
         if exists(package_path):
             (branch, rev) = revision_for_path(package_path)
@@ -71,7 +71,7 @@ def revision(package=''):
         return get_revision()
 
 @task
-@roles('code')
+@roles('app-server')
 def update_requirements():
     """Run pip install on remote machine to update python libraries"""
     activate = os.path.join(env.remote_base, env.virtualenv, 'bin/activate')
@@ -89,7 +89,7 @@ def update_requirements():
 @roles('code')
 def update(package=''):
     """Pull and update remote repository. If package parameter is given, update the named repository under virtualenv/src."""
-    if package:
+    if package and 'app-server' in env.roles:
         update_root = os.path.join(env.remote_base, env.virtualenv, 'src', package)
     else:
         update_root = env.remote_base
