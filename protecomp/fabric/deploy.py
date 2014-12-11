@@ -60,7 +60,7 @@ def get_revision(output_level=2):
 @task
 @roles('code')
 def revision(package=''):
-    if package and 'app-server' in env.roles:
+    if package and env.host in env.roledefs['app-server']:
         package_path = os.path.join(env.remote_base, env.virtualenv, 'src', package)
         if exists(package_path):
             (branch, rev) = revision_for_path(package_path)
@@ -89,7 +89,7 @@ def update_requirements():
 @roles('code')
 def update(package=''):
     """Pull and update remote repository. If package parameter is given, update the named repository under virtualenv/src."""
-    if package and 'app-server' in env.roles:
+    if package and env.host in env.roledefs['app-server']:
         update_root = os.path.join(env.remote_base, env.virtualenv, 'src', package)
     else:
         update_root = env.remote_base
