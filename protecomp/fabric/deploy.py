@@ -87,13 +87,18 @@ def update_requirements():
 
 @task
 @roles('code')
-def update():
-    """Pull and update remote repository"""
-    print "Updating %s:" % env.host
-    print "Revision before update:\t%s:%s" % revision_for_path(env.remote_base)
+def update(package=''):
+    """Pull and update remote repository. If package parameter is given, update the named repository under virtualenv/src."""
+    if package:
+        update_root = os.path.join(env.remote_base, env.virtualenv, 'src', package)
+    else:
+        update_root = env.remote_base
+
+    print "Updating %s on %s:" % (os.path.split(update_root)[1], env.host)
+    print "Revision before update:\t%s:%s" % revision_for_path(update_root)
     with settings(
             hide('stdout', 'running'),
-            cd(env.remote_base),
+            cd(update_root),
             ):
         if run('test -d .git || echo "failed"') != 'failed':
             # __git_ps1 gives nicely formatted output in all circumstances, 
@@ -104,7 +109,7 @@ def update():
             run('hg update')
         else:
             print "Unsupported revision control system or wrong remote_base"
-    print "Updated to revision: \t%s:%s" % revision_for_path(env.remote_base)
+    print "Updated to revision: \t%s:%s" % revision_for_path(update_root)
 
 @task
 @roles('media')
