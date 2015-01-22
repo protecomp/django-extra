@@ -117,7 +117,7 @@ def collectstatic():
     """Run manage.py collectstatic script on media-server"""
     activate = os.path.join(env.remote_base, env.virtualenv, 'bin/activate')
     manage = os.path.join(env.remote_base, env.manage)
-    run('source %s; python %s collectstatic ' % (activate, manage))
+    run('source %s; python %s collectstatic --noinput' % (activate, manage))
 
 @task
 @roles('app-server')
