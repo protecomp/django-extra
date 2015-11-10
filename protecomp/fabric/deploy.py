@@ -43,7 +43,6 @@ def revision_for_path(path):
             return (False, False)
     return (branch, rev)
 
-@task
 @roles('code')
 def get_revision(output_level=2):
     """Get branch and revision currently in use (hg parent)
@@ -59,16 +58,14 @@ def get_revision(output_level=2):
 
 @task
 @roles('code')
-def revision(package=''):
-    if package and env.host in env.roledefs['app-server']:
-        package_path = os.path.join(env.remote_base, env.virtualenv, 'src', package)
-        if exists(package_path):
-            (branch, rev) = revision_for_path(package_path)
-            print "%s: branch %s, revision %s" % (package, branch, rev)
-        else:
-            print "The package %s at %s does not exist!" % (package, package_path)
-    else:
-        return get_revision()
+def revision(*args):
+    """Show revision and branch for all repositories on the server, or only the specified ones"""
+    host = env.host.split('.', 1)[0]
+    packages = args if args else env.repository_roots.keys()
+
+    for package in packages:
+        (branch, rev) = revision_for_path(env.repository_roots[package])
+        print "%s:\t{0:28} {1}".format("%s:%s" % (package, branch), rev) % host
 
 @task
 @roles('app-server')
@@ -87,29 +84,64 @@ def update_requirements():
 
 @task
 @roles('code')
-def update(package=''):
-    """Pull and update remote repository. If package parameter is given, update the named repository under virtualenv/src."""
-    if package and env.host in env.roledefs['app-server']:
-        update_root = os.path.join(env.remote_base, env.virtualenv, 'src', package)
-    else:
-        update_root = env.remote_base
+def update(*args):
+    """Pull and update remote repositories. If argument is not given, only default repos are updated.
 
-    print "Updating %s on %s:" % (os.path.split(update_root)[1], env.host)
-    print "Revision before update:\t%s:%s" % revision_for_path(update_root)
-    with settings(
-            hide('stdout', 'running'),
-            cd(update_root),
-            ):
-        if run('test -d .git || echo "failed"') != 'failed':
-            # __git_ps1 gives nicely formatted output in all circumstances, 
-            # but might not be available in all systems.
-            run('git pull')
-        elif run('test -d .hg || echo "failed"') != 'failed':
-            run('hg pull')
-            run('hg update')
-        else:
-            print "Unsupported revision control system or wrong remote_base"
-    print "Updated to revision: \t%s:%s" % revision_for_path(update_root)
+    Requires env.repository_roots dict and env.update_defaults.
+    env.repository_roots = {
+        'proj1': '/path/to/proj1',
+        'proj2': '/path/to/proj2',
+    }
+    env.update_default = ('proj1', )
+
+    """
+    host = env.host.split('.', 1)[0]
+
+    packages = args if args else env.update_default
+
+    for package in packages:
+        update_root = env.repository_roots[package]
+
+        print "%s:\tUpdating %s..." % (host, package)
+        print "%s:\tRevision before update:\t%s:%s" % ((host, ) + revision_for_path(update_root))
+        with settings(
+                hide('stdout', 'running'),
+                cd(update_root),
+                ):
+            if run('test -d .git || echo "failed"') != 'failed':
+                # __git_ps1 gives nicely formatted output in all circumstances, 
+                # but might not be available in all systems.
+                run('git pull')
+            elif run('test -d .hg || echo "failed"') != 'failed':
+                run('hg pull')
+                run('hg update')
+            else:
+                print "Unsupported revision control system or wrong remote_base"
+        print "%s:\tUpdated to revision: \t%s:%s" % ((host, ) + revision_for_path(update_root))
+
+@task
+@roles('code')
+def checkout(branch=None, force=False, default='master'):
+    """Pull and checkout all remote repositories to a named branch, if it exists (fallback to master)
+    """
+    host = env.host.split('.', 1)[0]
+    if not branch:
+        raise Exception("No branch specified")
+    for package, repository_root in env.repository_roots.items():
+        with settings(
+                hide('stdout', 'running'),
+                cd(repository_root),
+                ):
+            print "%s:\t Fetching %s" % (host, package)
+            run('git fetch --all')
+            if run("git branch -a | grep '%s' || echo 'failed'" % branch) != 'failed':
+                branch_to_checkout = branch
+            else:
+                branch_to_checkout = default
+            print "%s:\t Checking out branch %s" % (host, branch_to_checkout)
+            args = ' --force' if force else ''
+            run("git checkout -q %s%s" % (args, branch_to_checkout))
+            run("git merge -q --ff-only origin %s" % branch_to_checkout)
 
 @task
 @roles('media')
