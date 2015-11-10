@@ -141,7 +141,7 @@ def checkout(branch=None, force=False, default='master'):
             print "%s:\t Checking out branch %s" % (host, branch_to_checkout)
             args = ' --force' if force else ''
             run("git checkout -q %s%s" % (args, branch_to_checkout))
-            run("git merge -q --ff-only origin %s" % branch_to_checkout)
+            run("git merge -q --ff-only origin/%s" % branch_to_checkout)
 
 @task
 @roles('media')
