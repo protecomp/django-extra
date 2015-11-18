@@ -20,6 +20,8 @@ from fabric.context_managers import hide
 from fabric.contrib.console import confirm
 from fabric.contrib.files import exists, sed
 
+from distutils.util import strtobool
+
 def revision_for_path(path):
     with settings(
             cd(path),
@@ -121,10 +123,15 @@ def update(*args):
 
 @task
 @roles('code')
-def checkout(branch=None, force=False, default='master'):
+def checkout(branch=None, force='false', reset='false', default='master'):
     """Pull and checkout all remote repositories to a named branch, if it exists (fallback to master)
+
+    force: force checkout
+    reset: reset --hard to upstream branch
     """
     host = env.host.split('.', 1)[0]
+    force = bool(strtobool(str(force)))
+    reset = bool(strtobool(str(reset)))
     if not branch:
         raise Exception("No branch specified")
     for package, repository_root in env.repository_roots.items():
@@ -141,7 +148,10 @@ def checkout(branch=None, force=False, default='master'):
             print "%s:\t Checking out branch %s" % (host, branch_to_checkout)
             args = ' --force' if force else ''
             run("git checkout -q %s%s" % (args, branch_to_checkout))
-            run("git merge -q --ff-only origin/%s" % branch_to_checkout)
+            if reset:
+                run("git reset --hard -q origin/%s" % branch_to_checkout)
+            else:
+                run("git merge -q --ff-only origin/%s" % branch_to_checkout)
 
 @task
 @roles('media')
