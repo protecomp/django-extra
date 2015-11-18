@@ -58,8 +58,8 @@ def get_revision(output_level=2):
     if branch is False: print "Unsupported revision control system or wrong remote_base"
     if output_level: print "    {0:15} {1}".format(branch, rev)
 
-@task
 @roles('code')
+@task
 def revision(*args):
     """Show revision and branch for all repositories on the server, or only the specified ones"""
     host = env.host.split('.', 1)[0]
@@ -69,8 +69,8 @@ def revision(*args):
         (branch, rev) = revision_for_path(env.repository_roots[package])
         print "%s:\t{0:28} {1}".format("%s:%s" % (package, branch), rev) % host
 
-@task
 @roles('app-server')
+@task
 def update_requirements():
     """Run pip install on remote machine to update python libraries"""
     activate = os.path.join(env.remote_base, env.virtualenv, 'bin/activate')
@@ -84,8 +84,8 @@ def update_requirements():
         run('source %s; pip install -r %s' % (activate, pip_requirements))
     print "Update finished."
 
-@task
 @roles('code')
+@task
 def update(*args):
     """Pull and update remote repositories. If argument is not given, only default repos are updated.
 
@@ -121,13 +121,28 @@ def update(*args):
                 print "Unsupported revision control system or wrong remote_base"
         print "%s:\tUpdated to revision: \t%s:%s" % ((host, ) + revision_for_path(update_root))
 
-@task
 @roles('code')
-def checkout(branch=None, force='false', reset='false', default='master'):
+@task
+def checkout(branch, force='false', reset='false', default='master'):
     """Pull and checkout all remote repositories to a named branch, if it exists (fallback to master)
 
-    force: force checkout
-    reset: reset --hard to upstream branch
+examples:
+
+    checkout:my_branch
+    - checkouts my_branch, fallbacking to master if the branch does not exist
+
+    checkout:release,reset=true
+    - checkouts release-branch and resets it to remote branch, deleting all local changes
+
+    checkout:feature/my_feature,default=release
+    - checkouts the branch, fallbacking to release-branch (release-branch must exist on all repos)
+
+args:
+
+    branch: branch name (required)
+    force: force checkout, overwriting local uncommitted changes
+    reset: after checkout, hard reset to remote branch
+    default: The branch to checkout if 'branch' does not exist
     """
     host = env.host.split('.', 1)[0]
     force = bool(strtobool(str(force)))
@@ -153,22 +168,22 @@ def checkout(branch=None, force='false', reset='false', default='master'):
             else:
                 run("git merge -q --ff-only origin/%s" % branch_to_checkout)
 
-@task
 @roles('media')
+@task
 def collectstatic():
     """Run manage.py collectstatic script on media-server"""
     activate = os.path.join(env.remote_base, env.virtualenv, 'bin/activate')
     manage = os.path.join(env.remote_base, env.manage)
     run('source %s; python %s collectstatic --noinput' % (activate, manage))
 
-@task
 @roles('app-server')
+@task
 def reload():
     """run reload.sh to reload the application"""
     run("~/run/reload.sh")
     
-@task
 @roles('migration')
+@task
 def migrate(option=''):
     """Run syncdb and migrations. Allowed option: merge"""
     option = "--" + option if option == 'merge' else ''
