@@ -20,6 +20,8 @@ from fabric.context_managers import hide
 from fabric.contrib.console import confirm
 from fabric.contrib.files import exists, sed
 
+from . import util
+
 from distutils.util import strtobool
 
 def revision_for_path(path):
@@ -175,6 +177,40 @@ def collectstatic():
     activate = os.path.join(env.remote_base, env.virtualenv, 'bin/activate')
     manage = os.path.join(env.remote_base, env.manage)
     run('source %s; python %s collectstatic --noinput' % (activate, manage))
+
+@roles('code')
+@task
+def status(*args):
+    """Show a status for all processes
+
+examples:
+
+    status
+    - status for all known processes
+
+    status:django,celery
+    - status for django and celery-processes
+
+setup:
+
+    env.processes = {
+        'role-name': {
+            'process-name': process_definition,
+            ...
+        },
+        ...
+    }
+
+    process_definition should be a dict returned by util.[foo]_process() function.
+    """
+    host = env.host.split('.', 1)[0]
+
+    for process_definition in util.get_processes(env.host, process_names=args or None):
+        command = process_definition['status']
+        with hide('stdout', 'running'):
+            output = run(command)
+        print "%s:\t %s" % (host, output)
+
 
 @roles('app-server')
 @task

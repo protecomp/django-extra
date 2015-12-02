@@ -3,10 +3,10 @@ Misc commands and utilities. Not to be run directly with fab, only as util.comma
 from other fabfiles
 """
 
-from fabric.api import *
-from fabric.context_managers import hide
-from fabric.contrib.console import confirm
-from fabric.contrib.files import exists, sed
+from fabric.api import run, sudo, env, local
+from protecomp.fabric.server_settings import get_roles_for_host
+
+import itertools
 
 def _sed(filename, before, after, limit='', use_sudo=False, backup='.bak'):
     """
@@ -36,17 +36,43 @@ def manage(command):
     """Runs local management command"""
     local('python %s/%s %s' % (env.local_base, env.manage_path, command), capture=False)
     
-def single_host(hostname):
-    """Returns a role definition with all roles defined to a single host. 
-    Usage:
-    
-        import util
-        env.roledefs = util.single_host('my.host.com')
-    """
+
+def supervisor_process(process_name, reload_command=None):
     return {
-        'media':        [hostname],
-        'app-server':   [hostname],
-        'code':         [hostname],
-        'migration':    [hostname],
-        'database':     [hostname],
+        'status': "supervisorctl status %s" % process_name,
+        'reload': reload_command or
+                  "supervisorctl restart %s" % process_name,
+        'restart': "supervisorctl restart %s" % process_name,
+        'stop': "supervisorctl stop %s" % process_name,
+        'start': "supervisorctl start %s" % process_name,
     }
+
+
+def get_processes(hostname, process_names=None):
+    """Get all process definitions for the specified host roles.
+
+    processes are defined as:
+    env.processes = {
+        'role-name': {
+            'process1': process_definition1,
+            'process2': process_definition2,
+        },
+        'role2-name': {
+            'process3': process_definition3,
+        },
+    }
+    """
+    host_roles = get_roles_for_host(hostname)
+
+    # Collect process_definitions to a dict from matching roles
+    process_definitions = {}
+    for role, d in env.processes.iteritems():
+        if role in host_roles:
+            process_definitions.update({k: v for k, v in d.iteritems()})
+
+    # Return processes matching one of the process names
+    # or all processes if process_names is empty
+    return [
+        v for k, v in process_definitions.iteritems()
+        if not process_names or k in process_names
+    ]
