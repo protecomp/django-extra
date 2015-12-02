@@ -31,6 +31,7 @@ def get_roledefs(hostinfo):
 
     # Init a dictionary with an empty list for all tags specified in the hosts-dict
     roledefs = {}
+    env.hostinfo = hostinfo
     all_tags = set(itertools.chain(*[d.keys() for d in hostinfo.values()]))
     for tag in all_tags:
         roledefs[tag] = []
@@ -43,6 +44,30 @@ def get_roledefs(hostinfo):
                 roledefs[tag].append(hostname)
 
     return roledefs
+
+def single_host(hostname):
+    """Returns a role definition with all roles defined to a single host. 
+    Usage:
+    
+        import util
+        env.roledefs = util.single_host('my.host.com')
+    """
+    return get_roledefs({
+        hostname: {
+            'media': True,
+            'app-server': True,
+            'worker': True,
+            'code': True,
+            'migration': True,
+            'database': True,
+        },
+    })
+
+
+def get_roles_for_host(hostname):
+    role_dict = env.hostinfo.get(hostname, {})
+    return [key for key, val in role_dict.items() if val]
+
 
 @task
 @runs_once
