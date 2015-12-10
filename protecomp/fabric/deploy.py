@@ -212,12 +212,54 @@ setup:
         print "%s:\t %s" % (host, output)
 
 
-@roles('app-server')
+@roles('code')
 @task
-def reload():
-    """run reload.sh to reload the application"""
-    run("~/run/reload.sh")
-    
+def reload(*args):
+    """Reloads a specified process or all processes
+
+examples:
+
+    reload
+    - reload all known processes
+
+    status:django,celery
+    - reload django and celery-processes
+
+setup: see status-task
+    """
+    # host = env.host.split('.', 1)[0]
+
+    for process_definition in util.get_processes(env.host, process_names=args or None):
+        command = process_definition['reload']
+        run(command)
+
+
+@roles('code')
+@task
+def restart(*args):
+    """Hard-restarts a specified process.
+
+Sometimes necessary to wake up a frozen process, or after
+configuration changes. Process name argument is not optional
+
+examples:
+
+    restart:django,node
+    - restarts django and node processes
+
+setup: see status-task
+    """
+    # host = env.host.split('.', 1)[0]
+
+    if not args:
+        print "Specify a process to restart"
+        return
+
+    for process_definition in util.get_processes(env.host, process_names=args):
+        command = process_definition['restart']
+        run(command)
+
+
 @roles('migration')
 @task
 def migrate(option=''):
