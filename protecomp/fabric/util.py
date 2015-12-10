@@ -35,7 +35,7 @@ def _sed(filename, before, after, limit='', use_sudo=False, backup='.bak'):
 def manage(command):
     """Runs local management command"""
     local('python %s/%s %s' % (env.local_base, env.manage_path, command), capture=False)
-    
+
 
 def supervisor_process(process_name, reload_command=None):
     return {
@@ -45,6 +45,19 @@ def supervisor_process(process_name, reload_command=None):
         'restart': "supervisorctl restart %s" % process_name,
         'stop': "supervisorctl stop %s" % process_name,
         'start': "supervisorctl start %s" % process_name,
+    }
+
+
+def pm2_process(process_name, process_file = None):
+    if not process_file:
+        process_file = "/home/%s/config/%s-pm2-app.json" % (env.user, process_name),
+
+    return {
+        'status': "pm2 status",
+        'reload': "pm2 reload %s" % process_name,
+        'restart': "pm2 restart %s" % process_file,
+        'stop': "pm2 delete %s" % process_name,
+        'start': "pm2 startOrRestart %s" % process_file,
     }
 
 
