@@ -69,29 +69,79 @@ def get_roles_for_host(hostname):
     return [key for key, val in role_dict.items() if val]
 
 
+def env_task(*args, **kwargs):
+    """Decorate the task as an deployment environment -defining task
+
+    see fabric.task decorator.
+    """
+    wrapper_function = task(*args, **kwargs)
+    wrapper_function.decorated_env_task = True
+    return wrapper_function
+
+
+def is_env_task(func):
+    return isinstance(func, object) and getattr(func, 'decorated_env_task', False)
+
+
+@task
+def info():
+    execute('help')
+
+
 @task
 @runs_once
 def help():
-    print
-    print "Usage: fab production/testing task"
-    print
-    print "See fab -l for all tasks"
-    print
-    print "Roles:"
-    print
-    for tag in env.my_tags:
-        line = "   "
-        line = line + tag + ": "
-        for host in env.my_hostinfo.iteritems():
-            try:
-                if host[1][tag] == True:
-                    line = line + "\n     " + host[0]
-            except KeyError:
-                pass
-        print line
+    if not getattr(env, 'roledefs', False):
+        print "No role definitions"
+        try:
+            import fabfile
+            env_tasks = [(n, val) for n, val in vars(fabfile).items() if is_env_task(val)]
+            print "Select one of the following environments:"
+            print
+            print "\tenv_name: \t description:"
+            for task_name, task in env_tasks:
+                print "\t%s \t %s" % (task_name, getattr(task, '__doc__'))
+            print
+        except:
+            print "Define a deployment environment first"
+            print
 
-    print
-    print "All hosts:"
-    print
-    for host in env.my_hostinfo.iteritems():
-        print "   "+host[0]
+        print "More info: f <env_name> help"
+    else:
+        print "Environment: %s" % env.tasks[0]
+        print
+        print "Servers:"
+        hostinfo = sorted(env.hostinfo.items(), key=lambda k: k[0])
+        for server, tags in hostinfo:
+            print "\t%s  \t%s" % (
+                server,
+                ','.join([name for name, value in tags.items() if value])
+            )
+        print
+        print "Update targets (commands: revision, update):"
+        for name, path in env.repository_roots.iteritems():
+            print "\t%s" % name
+        print
+        print "Process targets (commands: status, reload, restart):"
+        for role, roledict in env.processes.items():
+            for name, definition in roledict.iteritems():
+                print "\t%s" % name
+        print
+        migration_hosts = [name for name, tags in env.hostinfo.items() if tags.get('migration')]
+        if len(migration_hosts):
+            print "Production server shell (migrations etc.):"
+            print "\tssh %s@%s" % (env.user, migration_hosts[0])
+            print "\tcd %s; source activate" % env.remote_base
+        else:
+            print "No migration server for this environment"
+        print
+        database_hosts = [name for name, tags in env.hostinfo.items() if tags.get('database')]
+        if len(database_hosts):
+            print "Database shell:"
+            print "\tssh %s@%s" % (env.user, database_hosts[0])
+            print "\tmysql"
+        else:
+            print "No database host in this environment"
+
+        print
+    print "see fab -l for all tasks, fab -d command for command description"
