@@ -32,7 +32,7 @@ def revision_for_path(path):
         ):
         # Strange-looking commands with ||, this prevents unneeded errors when exit status is != 0
         if run('test -d .git || echo "failed"') != 'failed':
-            # __git_ps1 gives nicely formatted output in all circumstances, 
+            # __git_ps1 gives nicely formatted output in all circumstances,
             # but might not be available in all systems.
             branch_cmd = "source /etc/bash_completion.d/git*; __git_ps1 '%s'"
             branch = run(branch_cmd)
@@ -77,7 +77,7 @@ def update_requirements():
     """Run pip install on remote machine to update python libraries"""
     activate = os.path.join(env.remote_base, env.virtualenv, 'bin/activate')
     pip_requirements = os.path.join(env.remote_base, env.pip_requirements)
-    
+
     print "Updating pip-requirements..."
     with settings(
             cd(env.remote_base),
@@ -113,7 +113,7 @@ def update(*args):
                 cd(update_root),
                 ):
             if run('test -d .git || echo "failed"') != 'failed':
-                # __git_ps1 gives nicely formatted output in all circumstances, 
+                # __git_ps1 gives nicely formatted output in all circumstances,
                 # but might not be available in all systems.
                 run('git pull')
             elif run('test -d .hg || echo "failed"') != 'failed':
