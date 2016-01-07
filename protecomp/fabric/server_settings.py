@@ -127,6 +127,10 @@ def help():
             for name, definition in roledict.iteritems():
                 print "\t%s" % name
         print
+        print "Deployment targets (commands: deploy):"
+        for name, action in env.deployment.iteritems():
+            print "\t%s" % name
+        print
         migration_hosts = [name for name, tags in env.hostinfo.items() if tags.get('migration')]
         if len(migration_hosts):
             print "Production server shell (migrations etc.):"

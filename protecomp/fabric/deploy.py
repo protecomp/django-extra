@@ -260,6 +260,31 @@ setup: see status-task
         run(command)
 
 
+@roles('media')
+@task
+def deploy(*args):
+    """Deploy all targets or a specified target
+
+Runs deployment (JS/CSS bundles, staticfiles collection) on the specified target.
+
+examples:
+
+    deploy:django
+    - runs Django collectstatic
+
+setup:
+
+    env.deployment = {
+        'target_name': 'task_name_to_run',
+        'another_target': 'another_task',
+    }
+    """
+    targets = args if args else env.deployment.keys()
+
+    for key in targets:
+        execute(env.deployment[key])
+
+
 @roles('migration')
 @task
 def migrate(option=''):
