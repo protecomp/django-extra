@@ -279,6 +279,11 @@ setup:
         'another_target': 'another_task',
     }
     """
+    if args and not all([key in env.deployment for key in args]):
+        raise Exception(("One of the targets:" if len(args) > 1 else "Deployment target")
+                        + " %s not found, did you misspell it?" %
+                        ','.join(args))
+
     targets = args if args else env.deployment.keys()
 
     for key in targets:
