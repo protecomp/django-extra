@@ -75,6 +75,16 @@ def get_processes(hostname, process_names=None):
         },
     }
     """
+    # if process_names param is given, check that they all exist somewhere
+    # Otherwise process name is probably misspelled and we should raise an error
+    if process_names and not all([
+        any([(name in d) for d in env.processes.values()])
+        for name in process_names
+    ]):
+        raise Exception(("One of the process names:" if len(process_names) > 1 else "Process name")
+                        + " %s not found in any roles, did you misspell it?" %
+                        ','.join(process_names))
+
     host_roles = get_roles_for_host(hostname)
 
     # Collect process_definitions to a dict from matching roles
