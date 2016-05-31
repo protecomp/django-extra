@@ -292,10 +292,11 @@ setup:
 
 @roles('migration')
 @task
-def migrate(option=''):
+def migrate(option='', syncdb=False):
     """Run syncdb and migrations. Allowed option: merge"""
     option = "--" + option if option == 'merge' else ''
     activate = os.path.join(env.remote_base, env.virtualenv, 'bin/activate')
     manage = os.path.join(env.remote_base, env.manage)
-    run("source %s; python %s syncdb" % (activate, manage))
+    if syncdb:
+        run("source %s; python %s syncdb" % (activate, manage))
     run("source %s; python %s migrate %s" % (activate, manage, option))
