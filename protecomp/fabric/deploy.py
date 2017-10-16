@@ -155,10 +155,10 @@ args:
         with settings(
                 hide('stdout', 'running'),
                 cd(repository_root),
-                ):
+        ):
             print "%s:\t Fetching %s" % (host, package)
             run('git fetch --all')
-            if run("git branch -a | grep '%s' || echo 'failed'" % branch) != 'failed':
+            if run("git branch -a | grep -e '%s$' || echo 'failed'" % branch) != 'failed':
                 branch_to_checkout = branch
             else:
                 branch_to_checkout = default
