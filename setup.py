@@ -2,7 +2,7 @@ from distutils.core import setup
 
 setup(
     name='protecomp_django_extra',
-    version='',
+    version='1.0',
     packages=['protecomp', 'protecomp.fabric', 'protecomp.middleware'],
     url='',
     license='FreeBSD',
